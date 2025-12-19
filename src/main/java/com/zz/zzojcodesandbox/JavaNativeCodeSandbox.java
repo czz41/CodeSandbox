@@ -3,6 +3,8 @@ package com.zz.zzojcodesandbox;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.dfa.FoundWord;
+import cn.hutool.dfa.WordTree;
 import com.zz.zzojcodesandbox.model.ExecuteCodeRequest;
 import com.zz.zzojcodesandbox.model.ExecuteCodeResponse;
 import com.zz.zzojcodesandbox.model.ExecuteMessage;
@@ -26,6 +28,14 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
 
     private static final Long TIME_OUT=5000L;
 
+    private static final List<String> blackList= Arrays.asList("Files", "exec");
+
+    private static final WordTree WORD_TREE=new WordTree();
+
+    static{
+        WORD_TREE.addWords(blackList);
+    }
+
     //测试程序
     public static void main(String[] args) {
         JavaNativeCodeSandbox javaNativeCodeSandbox=new JavaNativeCodeSandbox();
@@ -44,6 +54,14 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
         List<String> inputList = executeCodeRequest.getInputList();
         String language = executeCodeRequest.getLanguage();
         String code = executeCodeRequest.getCode();
+
+        //校验代码是否包含敏感词
+        FoundWord foundWord = WORD_TREE.matchWord(code);
+        if(foundWord!=null){
+            System.out.println("代码中包含敏感词："+foundWord.getWord());
+            return null;
+        }
+
         String userDir= System.getProperty("user.dir");
         String globalCodePathName=userDir+ File.separator+GLOBAL_CODE_DIR_NAME;
         //新建全局代码目录
