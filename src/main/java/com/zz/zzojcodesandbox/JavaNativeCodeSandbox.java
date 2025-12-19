@@ -21,7 +21,10 @@ import java.util.UUID;
 public class JavaNativeCodeSandbox implements CodeSandbox {
 
     private  static final String GLOBAL_CODE_DIR_NAME="tmpCode";
+
     private  static final String GLOBAL_JAVA_CLASS_NAME="Main.java";
+
+    private static final Long TIME_OUT=5000L;
 
     //测试程序
     public static void main(String[] args) {
@@ -53,7 +56,7 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
         File userCodeFile=FileUtil.writeString(code,userCodePath, StandardCharsets.UTF_8);
 
         //编译代码得到class文件
-        String compiledCmd=String.format("javac -encoding utf-8 %s",userCodeFile.getAbsoluteFile());
+        String compiledCmd=String.format("javac -encoding utf-8 -J-Dfile.encoding=UTF-8 %s",userCodeFile.getAbsoluteFile());
         try {
             Process compileProcess=Runtime.getRuntime().exec(compiledCmd);
             ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(compileProcess, "编译");
@@ -65,8 +68,18 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
         List<ExecuteMessage>executeMessageList=new ArrayList<>();
         for(String inputArgs:inputList){
             String runCmd=String.format("java -Dfile.encoding=UTF-8 -cp %s Main %s",userCodeParentPath,inputArgs);
+
             try {
                 Process runProcess=Runtime.getRuntime().exec(runCmd);
+                new Thread(()->{  //防止恶意死循环代码
+                    try {
+                        Thread.sleep(TIME_OUT);
+                        System.out.println("代码运行超时");
+                        runProcess.destroy();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }).start();;
                 ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行");
                 //ExecuteMessage executeMessage = ProcessUtils.runInteractProcessAndGetMessage(runProcess,inputArgs);
                 System.out.println(executeMessage);
