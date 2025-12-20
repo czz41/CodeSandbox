@@ -9,6 +9,7 @@ import com.zz.zzojcodesandbox.model.ExecuteCodeRequest;
 import com.zz.zzojcodesandbox.model.ExecuteCodeResponse;
 import com.zz.zzojcodesandbox.model.ExecuteMessage;
 import com.zz.zzojcodesandbox.model.JudgeInfo;
+import com.zz.zzojcodesandbox.security.DefaultSecurityManager;
 import com.zz.zzojcodesandbox.utils.ProcessUtils;
 import org.springframework.util.StringUtils;
 
@@ -32,6 +33,10 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
 
     private static final WordTree WORD_TREE=new WordTree();
 
+    public static final String SECURITY_MANAGER_PATH="D:\\javagit\\zzoj-code-sandbox\\src\\main\\resources\\security";
+
+    public static final String SECURITY_MANAGER_CLASS_NAME="MySecurityManager";
+
     static{
         WORD_TREE.addWords(blackList);
     }
@@ -51,6 +56,7 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
 
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
+        //System.setSecurityManager(new DefaultSecurityManager());
         List<String> inputList = executeCodeRequest.getInputList();
         String language = executeCodeRequest.getLanguage();
         String code = executeCodeRequest.getCode();
@@ -74,6 +80,7 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
         File userCodeFile=FileUtil.writeString(code,userCodePath, StandardCharsets.UTF_8);
 
         //编译代码得到class文件
+        //String compiledCmd=String.format("javac -encoding utf-8 -J-Dfile.encoding=UTF-8 %s",userCodeFile.getAbsoluteFile());
         String compiledCmd=String.format("javac -encoding utf-8 -J-Dfile.encoding=UTF-8 %s",userCodeFile.getAbsoluteFile());
         try {
             Process compileProcess=Runtime.getRuntime().exec(compiledCmd);
@@ -85,7 +92,8 @@ public class JavaNativeCodeSandbox implements CodeSandbox {
         //运行代码
         List<ExecuteMessage>executeMessageList=new ArrayList<>();
         for(String inputArgs:inputList){
-            String runCmd=String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main %s",userCodeParentPath,inputArgs);
+            //String runCmd=String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main %s",userCodeParentPath,inputArgs);
+            String runCmd=String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s;%s -Djava.security.manager=%s Main %s",userCodeParentPath,SECURITY_MANAGER_PATH,SECURITY_MANAGER_CLASS_NAME,inputArgs);
 
             try {
                 Process runProcess=Runtime.getRuntime().exec(runCmd);
