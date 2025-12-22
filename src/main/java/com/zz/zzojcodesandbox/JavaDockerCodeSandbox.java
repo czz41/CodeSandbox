@@ -18,6 +18,7 @@ import com.zz.zzojcodesandbox.model.ExecuteCodeResponse;
 import com.zz.zzojcodesandbox.model.ExecuteMessage;
 import com.zz.zzojcodesandbox.model.JudgeInfo;
 import com.zz.zzojcodesandbox.utils.ProcessUtils;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 
 import java.io.Closeable;
@@ -33,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * docker 代码沙箱实现（重写模板方法的runFile）
  */
+@Component
 public class JavaDockerCodeSandbox extends JavaCodeSandboxTemplate {
     private static final long TIME_OUT = 5000L;
     private static final Boolean FIRST_INIT = true;
