@@ -86,6 +86,8 @@ public class ProcessUtils {
 
         try {
             //向控制台输入程序
+            StopWatch stopWatch=new StopWatch();
+            stopWatch.start();
             OutputStream outputStream = runProcess.getOutputStream();
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream);
             String[] s = args.split(" ");
@@ -108,6 +110,8 @@ public class ProcessUtils {
             outputStream.close();
             inputStream.close();
             runProcess.destroy();
+            stopWatch.stop();
+            executeMessage.setTime(stopWatch.getLastTaskTimeMillis());
         }catch (Exception e){
             e.printStackTrace();
         }

@@ -49,6 +49,11 @@
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.github.docker-java/docker-java-transport-httpclient5 -->
         <dependency>
+            <groupId>com.github.oshi</groupId>
+            <artifactId>oshi-core</artifactId>
+            <version>6.4.0</version> <!-- 稳定版，支持Java 8 -->
+        </dependency>
+        <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java-transport-httpclient5</artifactId>
             <version>3.3.0</version>
@@ -84,7 +89,7 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <mainClass>com.zz.zzojcodesandbox.ZzojCodeSandboxApplication</mainClass>
-                    <skip>true</skip>
+                    <skip>false</skip>
                 </configuration>
                 <executions>
                     <execution>

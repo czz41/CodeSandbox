@@ -85,7 +85,7 @@ public class JavaDockerCodeSandbox extends JavaCodeSandboxTemplate {
         }
         System.out.println("下载完成");*/
         //创建容器
-        String image = "swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/openjdk:8-jdk-alpine";
+        String image = "openjdk:8-alpine ";
         CreateContainerCmd containerCmd = dockerClient.createContainerCmd(image);
         HostConfig hostConfig = new HostConfig();
         hostConfig.withMemory(100 * 1000 * 1000L);

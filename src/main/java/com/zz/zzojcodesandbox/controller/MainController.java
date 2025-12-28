@@ -1,5 +1,6 @@
 package com.zz.zzojcodesandbox.controller;
 
+import com.zz.zzojcodesandbox.JavaDockerCodeSandbox;
 import com.zz.zzojcodesandbox.JavaNativeCodeSandbox;
 import com.zz.zzojcodesandbox.model.ExecuteCodeRequest;
 import com.zz.zzojcodesandbox.model.ExecuteCodeResponse;
@@ -16,6 +17,8 @@ public class MainController {
     private static final String AUTH_REQUEST_SECRET="secretKey";
     @Resource
     private JavaNativeCodeSandbox javaNativeCodeSandbox;
+    @Resource
+    private JavaDockerCodeSandbox javaDockerCodeSandbox;
 
     @GetMapping("/health")
     public String healthCheck() {
@@ -27,15 +30,15 @@ public class MainController {
                                     HttpServletRequest request,
                                     HttpServletResponse response){
         //基本的认证
-        String authHeader=request.getHeader(AUTH_REQUEST_HEADER);
+        /*String authHeader=request.getHeader(AUTH_REQUEST_HEADER);
         if(!AUTH_REQUEST_SECRET.equals(authHeader)){
             response.setStatus(403);
             return null;
-        }
+        }*/
         if(executeCodeRequest==null){
             throw new RuntimeException("请求参数为空");
         }
-        ExecuteCodeResponse executeCodeResponse = javaNativeCodeSandbox.executeCode(executeCodeRequest);
+        ExecuteCodeResponse executeCodeResponse =   javaNativeCodeSandbox.executeCode(executeCodeRequest);
         return executeCodeResponse;
     }
 

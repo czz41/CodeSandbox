@@ -50,7 +50,7 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox{
      * @param userCodeFile
      * @return
      */
-    public ExecuteMessage compileFile(File userCodeFile){
+    public ExecuteMessage compileFile(File userCodeFile) throws RuntimeException {
         //String compiledCmd=String.format("javac -encoding utf-8 -J-Dfile.encoding=UTF-8 %s",userCodeFile.getAbsoluteFile());
         String compiledCmd=String.format("javac -encoding utf-8 -J-Dfile.encoding=UTF-8 %s",userCodeFile.getAbsoluteFile());
         try {
@@ -71,7 +71,7 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox{
      * @param inputList
      * @return
      */
-    public List<ExecuteMessage> runFile(File userCodeFile,List<String>inputList){
+    public List<ExecuteMessage> runFile(File userCodeFile,List<String>inputList) throws RuntimeException {
         String userCodeParentPath = userCodeFile.getParentFile().getAbsolutePath();
         List<ExecuteMessage>executeMessageList=new ArrayList<>();
         for(String inputArgs:inputList){
@@ -89,7 +89,11 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox{
                         throw new RuntimeException(e);
                     }
                 }).start();;
-                ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行");
+                //ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行");
+                ExecuteMessage executeMessage = ProcessUtils.runInteractProcessAndGetMessage(runProcess, inputArgs);
+                int exitCode = runProcess.waitFor();
+                if(exitCode != 0)
+                    throw new RuntimeException("执行错误");
                 System.out.println(executeMessage);
                 executeMessageList.add(executeMessage);
             } catch (Exception e) {
@@ -110,6 +114,7 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox{
         List<String>outputList=new ArrayList<>();
         //取最大值判断是否超时
         long maxTime=0;
+        long maxMemory=0;
         for(ExecuteMessage executeMessage:executeMessageList){
             String errorMessage=executeMessage.getErrorMessage();
             if(StrUtil.isNotBlank(errorMessage)){
@@ -123,6 +128,10 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox{
             if(time!=null){
                 maxTime=Math.max(maxTime,time);
             }
+            Long memory=executeMessage.getMemory();
+            if(memory!=null){
+                maxMemory=Math.max(maxMemory,memory);
+            }
         }
         //正常运行完成
         if(outputList.size()==executeMessageList.size()){
@@ -131,8 +140,8 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox{
         executeCodeResponse.setOutputList(outputList);
         JudgeInfo judgeInfo=new JudgeInfo();
         judgeInfo.setTime(maxTime);
-        //要借助第三方库来获取内存，过于麻烦，不做展示
-        //judgeInfo.setMemory();
+        //要借助第三方库来获取内存，过于麻烦
+        judgeInfo.setMemory(maxMemory);
         executeCodeResponse.setJudgeInfo(judgeInfo);
         return executeCodeResponse;
     }
@@ -177,15 +186,31 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox{
         List<String> inputList = executeCodeRequest.getInputList();
         String language = executeCodeRequest.getLanguage();
         String code = executeCodeRequest.getCode();
+        ExecuteCodeResponse outputResponse=new ExecuteCodeResponse();
         //1.把用户代码保存为文件
         File userCodeFile=saveCodeToFile(code);
         //2.编译代码得到class文件
-        ExecuteMessage executeMessage=compileFile(userCodeFile);
-        System.out.println(executeMessage);
+        ExecuteMessage executeMessage= null;
+        try {
+            executeMessage = compileFile(userCodeFile);
+            System.out.println(executeMessage);
+        } catch (RuntimeException e) {
+            outputResponse.setMessage("Compile Error");
+        }
         //3.执行代码得到输出结果
-        List<ExecuteMessage> executeMessageList = runFile(userCodeFile, inputList);
-        //4.获取输出结果
-        ExecuteCodeResponse outputResponse=getOutputResponse(executeMessageList);
+        List<ExecuteMessage> executeMessageList = null;
+        try {
+            String responseMsg = outputResponse != null ? outputResponse.getMessage() : null;
+            if(!"Compile Error".equals(responseMsg))
+            {
+                executeMessageList = runFile(userCodeFile, inputList);
+                //4.获取输出结果
+                outputResponse=getOutputResponse(executeMessageList);
+            }
+        } catch (RuntimeException e) {
+            outputResponse.setMessage("Runtime Error");
+            System.out.println("运行失败");
+        }
         //5.文件清理
         boolean b=deleteFile(userCodeFile);
         if(!b){
